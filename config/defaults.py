@@ -149,6 +149,8 @@ _C.TEST.IMS_PER_BATCH = 128
 _C.TEST.WEIGHT = ""
 # # Whether feature is nomalized before test, if yes, it is equivalent to cosine distance
 _C.TEST.FEAT_NORM = True
+# Only run prediction
+_C.TEST.ONLY_PREDICT = False
 # Only run test
 _C.TEST.ONLY_TEST = False
 # If to visualize rank results

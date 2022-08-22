@@ -81,7 +81,7 @@ class Baseline(nn.Module):
             self.base = resnet101_ibn_a(last_stride)
         self.model_name = model_name
 
-        if pretrain_choice and not cfg.MODEL.RESUME_TRAINING and not cfg.TEST.ONLY_TEST:
+        if pretrain_choice and not cfg.MODEL.RESUME_TRAINING and not cfg.TEST.ONLY_TEST and not cfg.TEST.ONLY_PREDICT:
             # If resume training do not load backbone weights
             self.base.load_param(model_path)
             print('Loading pretrained ImageNet model......')

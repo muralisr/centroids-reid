@@ -21,6 +21,22 @@ from callbacks import ModelCheckpointPeriodic
 from datasets import init_dataset
 from modelling.backbones.resnet_ibn_a import resnet50_ibn_a
 
+def get_methods(object, spacing=20):
+  methodList = []
+  for method_name in dir(object):
+    try:
+        if callable(getattr(object, method_name)):
+            methodList.append(str(method_name))
+    except Exception:
+        methodList.append(str(method_name))
+  processFunc = (lambda s: ' '.join(s.split())) or (lambda s: s)
+  for method in methodList:
+    try:
+        print(str(method.ljust(spacing)) + ' ' +
+              processFunc(str(getattr(object, method).__doc__)[0:90]))
+    except Exception:
+        print(method.ljust(spacing) + ' ' + ' getattr() failed')
+
 
 def get_distributed_sampler(
     trainer, dataset, train, **kwargs
@@ -125,7 +141,24 @@ def run_single(cfg, method, logger_save_dir):
         drop_last=cfg.DATALOADER.DROP_LAST,
     )
     val_dataloader = dm.val_dataloader()
-    if cfg.TEST.ONLY_TEST:
+    if cfg.TEST.ONLY_PREDICT:
+        method = method.load_from_checkpoint(
+            cfg.MODEL.PRETRAIN_PATH,
+            cfg=cfg,
+            num_query=dm.num_query,
+            num_classes=dm.num_classes,
+            use_multiple_loggers=True if len(loggers) > 1 else False,
+        )
+        
+        print(f"trainer is {trainer} and methods is {get_methods(trainer)}")
+        predictions = trainer.predict(model=method, test_dataloaders=val_dataloader)
+        print(f"len predictions 1 is {len(predictions)}")
+        method.hparams.MODEL.USE_CENTROIDS = not method.hparams.MODEL.USE_CENTROIDS
+        predictions = trainer.predict(model=method, test_dataloaders=val_dataloader)
+        print(f"len predictions 2 is {len(predictions)}")
+        method.hparams.MODEL.USE_CENTROIDS = not method.hparams.MODEL.USE_CENTROIDS
+        input("ok done")
+    elif cfg.TEST.ONLY_TEST:
         method = method.load_from_checkpoint(
             cfg.MODEL.PRETRAIN_PATH,
             cfg=cfg,
