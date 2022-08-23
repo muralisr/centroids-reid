@@ -145,3 +145,4 @@ models/
 *.pyc
 debugs/
 *.c
+bin/
