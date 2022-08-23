@@ -129,9 +129,7 @@ def run_single(cfg, method, logger_save_dir):
         if cfg.MODEL.RESUME_TRAINING
         else None,
         callbacks=[periodic_checkpointer],
-        enable_pl_optimizer=True,
         reload_dataloaders_every_epoch=True,
-        automatic_optimization=cfg.SOLVER.USE_AUTOMATIC_OPTIM,
     )
 
     train_loader = dm.train_dataloader(
@@ -150,11 +148,11 @@ def run_single(cfg, method, logger_save_dir):
             use_multiple_loggers=True if len(loggers) > 1 else False,
         )
         
-        print(f"trainer is {trainer} and methods is {get_methods(trainer)}")
-        predictions = trainer.predict(model=method, test_dataloaders=val_dataloader)
+        # print(f"trainer is {trainer} and methods is {get_methods(trainer)}")
+        predictions = trainer.predict(model=method, dataloaders=val_dataloader)
         print(f"len predictions 1 is {len(predictions)}")
         method.hparams.MODEL.USE_CENTROIDS = not method.hparams.MODEL.USE_CENTROIDS
-        predictions = trainer.predict(model=method, test_dataloaders=val_dataloader)
+        predictions = trainer.predict(model=method, dataloaders=val_dataloader)
         print(f"len predictions 2 is {len(predictions)}")
         method.hparams.MODEL.USE_CENTROIDS = not method.hparams.MODEL.USE_CENTROIDS
         input("ok done")

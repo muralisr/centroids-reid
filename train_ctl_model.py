@@ -34,6 +34,52 @@ class CTLModel(ModelBase):
             "centroid_triplet",
         ]
         self.losses_dict = {n: [] for n in self.losses_names}
+    
+    def forward(self, batch):
+        x, class_labels, camid, isReal = batch  # batch is a tuple
+
+        unique_classes = len(np.unique(class_labels.detach().cpu()))
+
+        # Get backbone features
+        _, features = self.backbone(x)
+
+        
+        class_labels_real = class_labels[isReal]
+        features_real = features[isReal]
+        center_loss = self.hparams.SOLVER.CENTER_LOSS_WEIGHT * self.center_loss(
+            features_real, class_labels_real
+        )
+        bn_features = self.bn(features_real)
+        cls_score = self.fc_query(bn_features)
+        
+        # Prepare masks for uneven numbe of sample per pid in a batch
+        ir = isReal.view(unique_classes, -1)
+        t = repeat(ir, "c b -> c b s", s=self.hparams.DATALOADER.NUM_INSTANCE)
+        t_re = rearrange(t, "c b s -> b (c s)")
+        t_re = t_re & isReal
+
+        masks, labels_list = self.create_masks_train(class_labels)  ## True for gallery
+        masks = masks.to(features.device)
+        masks = masks & t_re
+
+        masks_float = masks.float().to(features.device)
+        padded = masks_float.unsqueeze(-1) * features.unsqueeze(0)  # For broadcasting
+
+        centroids_mask = rearrange(
+            masks, "i (ins s) -> i ins s", s=self.hparams.DATALOADER.NUM_INSTANCE
+        )
+        padded_tmp = rearrange(
+            padded,
+            "i (ins s) dim -> i ins s dim",
+            s=self.hparams.DATALOADER.NUM_INSTANCE,
+        )
+        valid_inst = centroids_mask.sum(-1)
+        valid_inst_bool = centroids_mask.sum(-1).bool()
+        centroids_emb = padded_tmp.sum(-2) / valid_inst.masked_fill(
+            valid_inst == 0, 1
+        ).unsqueeze(-1)
+        return centroids_emb
+        
 
     def training_step(self, batch, batch_idx, optimizer_idx=None):
         opt, opt_center = self.optimizers(use_pl_optimizer=True)
