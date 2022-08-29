@@ -83,8 +83,9 @@ if __name__ == "__main__":
 
     ### Inference
     log.info("Running inference")
+    use_cuda = True if torch.cuda.is_available() and cfg.GPU_IDS else False
     embeddings, paths = run_inference(
-        model, val_loader, cfg, print_freq=args.print_freq
+        model, val_loader, cfg, print_freq=args.print_freq, use_cuda=use_cuda,
     )
 
     ### Load gallery data
@@ -105,7 +106,7 @@ if __name__ == "__main__":
         embeddings = torch.from_numpy(embeddings)
 
     # Use GPU if available
-    device = torch.device("cuda") if cfg.GPU_IDS else torch.device("cpu")
+    device = torch.device("cpu") # torch.device("cuda") if cfg.GPU_IDS else torch.device("cpu")
     embeddings_gallery = embeddings_gallery.to(device)
     embeddings = embeddings.to(device)
 

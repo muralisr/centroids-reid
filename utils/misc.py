@@ -149,7 +149,7 @@ def run_single(cfg, method, logger_save_dir):
             num_classes=dm.num_classes,
             use_multiple_loggers=True if len(loggers) > 1 else False,
         )
-        
+        '''
         print(f"trainer is {trainer} and methods is {get_methods(trainer)}")
         predictions = trainer.predict(model=method, test_dataloaders=val_dataloader)
         print(f"len predictions 1 is {len(predictions)}")
@@ -158,6 +158,12 @@ def run_single(cfg, method, logger_save_dir):
         print(f"len predictions 2 is {len(predictions)}")
         method.hparams.MODEL.USE_CENTROIDS = not method.hparams.MODEL.USE_CENTROIDS
         input("ok done")
+        '''
+        print(f"just doing testing")
+        trainer.test(model=method, test_dataloaders=val_dataloader)
+        method.hparams.MODEL.USE_CENTROIDS = not method.hparams.MODEL.USE_CENTROIDS
+        trainer.test(model=method, test_dataloaders=val_dataloader)
+        method.hparams.MODEL.USE_CENTROIDS = not method.hparams.MODEL.USE_CENTROIDS
     elif cfg.TEST.ONLY_TEST:
         method = method.load_from_checkpoint(
             cfg.MODEL.PRETRAIN_PATH,
